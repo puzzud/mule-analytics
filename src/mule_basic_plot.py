@@ -11,9 +11,20 @@ import numpy as np
 scores = [[0 for i in range(13)] for j in range(4)]
 
 player_species = ['Mechtron', 'Gollumer', 'Packer', 'Bonzoid', 'Spheroid', 'Flapper', 'Leggite', 'Humanoid']
+
+# player_colors is list that really contains only 4 colors, but due to C64 indexing requires 9 values
 player_colors = ['null', 'null', 'null', 'null', 'magenta', 'green', 'blue', 'null', 'red']
+
+# empty lists for colors and names (indexed to player). Probably a more elegant way to do this...
 player_color = ['', '', '', '']
 player_name = ['', '', '', '']
+
+# list of possible monthly events
+
+month_events = ['Pest attack', 'Pirate ship', 'Acid rain storm', 'Planetquake', 'Sunspot activity',
+				  'Meteorite strike', 'Radiation - M.U.L.E. goes crazy', 'Fire in the store']
+
+month_event = ['']
 
 def read_mule_game_file(file_path: str) -> dict:
 	try:
@@ -67,6 +78,9 @@ def process_mule_game_data(mule_game_data: dict):
 		status_screen_data: list[dict[str]] = None
 		screen_events_data: list[dict[str]] = None
 
+		status_month_data: list[dict[str]] = None
+		month_events_data: list[dict[str]] = None
+
 		screens_data: list[dict[str]] = round_data["screens"]
 		for screen_data in screens_data:
 			screen_events_data = screen_data.get("0")
@@ -74,6 +88,14 @@ def process_mule_game_data(mule_game_data: dict):
 			if is_status_screen_data:
 				status_screen_data = screen_data
 				break
+
+		for screen_data in screens_data:
+			month_events_data = screen_data.get("2")
+			is_status_month_data: bool = (month_events_data != None)
+			if is_status_month_data:
+				status_month_data = screen_data
+				break
+
 
 		if status_screen_data != None:
 			for screen_event_data in screen_events_data:
@@ -94,7 +116,15 @@ def process_mule_game_data(mule_game_data: dict):
 
 					player_rank: int = screen_event_parameters[13 + player_index]
 
-				colony_score_rating: int = screen_event_parameters[12]
+		if status_month_data != None:
+			for month_event_data in month_events_data:
+				month_event_id: int = month_event_data["id"]
+
+				month_event_parameters: list[int] = month_event_data["parameters"]
+
+				if month_event_id == 290:
+					month_event.append(month_events[month_event_parameters[0]])
+
 
 
 
@@ -118,11 +148,12 @@ if __name__ == "__main__":
 	process_mule_game_data(mule_game_data)
 
 	# Create plot using matplotlib package
-	fig, ax = plt.subplots()
+	fig, ax = plt.subplots(figsize=(10,6))
+	plt.subplots_adjust(bottom=0.4)
 	for player_plot in range(4):
 		ax.plot(scores[player_plot], player_color[player_plot], marker = 'o', label = player_name[player_plot])
 	ax.legend(player_name)
-	ax.set_xlabel("Month")
 	ax.set_ylabel("Total Wealth")
-	ax.set_xticks(np.arange(0, 13, 1))
+	ax.tick_params(axis = 'x', labelrotation = 80)
+	ax.set_xticks(np.arange(0, 12, 1), month_event)
 	plt.show()
