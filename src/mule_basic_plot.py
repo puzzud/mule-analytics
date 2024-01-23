@@ -64,7 +64,7 @@ def process_mule_game_data(mule_game_data: dict):
 		if input_type == 255:
 			player_name[player_index] = "Computer"
 		else:
-			player_name[player_index] = input ("Who was playing the " + player_color[player_index] + " " + player_species[species_id]+ "? ")
+			player_name[player_index] = input("Who was playing the " + player_color[player_index] + " " + player_species[species_id]+ "? ")
 
 		good_amounts: list[int] = current_player_data["goodAmounts"]
 		for good_type in range(len(good_amounts)):
@@ -184,14 +184,14 @@ if __name__ == "__main__":
 	event_label_colors.append('gray')
 
 	# Create plot using matplotlib package
-	fig, ax = plt.subplots(figsize=(10,6))
+	fig, ax = plt.subplots(figsize=(10, 6))
 	plt.subplots_adjust(bottom=0.4)
 	for player_plot in range(4):
-		ax.plot(scores[player_plot], player_color[player_plot], marker = 'o', label = player_name[player_plot])
+		ax.plot(scores[player_plot], player_color[player_plot], marker='o', label=player_name[player_plot])
 	ax.legend(player_name)
 	ax.set_ylabel("Total Wealth")
-	ax.tick_params(axis = 'x', labelrotation = 80)
+	ax.tick_params(axis='x', labelrotation = 80)
 	ax.set_xticks(np.arange(0, 13, 1), month_event)
-	for i in range(13) :
+	for i in range(13):
 		ax.get_xticklabels()[i].set_color(event_label_colors[i])
 	plt.show()
