@@ -13,7 +13,8 @@ scores = [[0 for i in range(13)] for j in range(4)]
 player_species = ['Mechtron', 'Gollumer', 'Packer', 'Bonzoid', 'Spheroid', 'Flapper', 'Leggite', 'Humanoid']
 
 # player_colors is list that really contains only 4 colors, but due to C64 indexing requires 9 values
-player_colors = ['null', 'null', 'null', 'null', 'magenta', 'green', 'blue', 'null', 'red']
+
+player_colors = ['', '', '', '', 'magenta', 'green', 'blue', '', 'red']
 
 # empty lists for colors and names (indexed to player). Probably a more elegant way to do this...
 player_color = ['', '', '', '']
@@ -24,7 +25,8 @@ player_name = ['', '', '', '']
 month_events = ['Pest attack', 'Pirate ship', 'Acid rain storm', 'Planetquake', 'Sunspot activity',
 				  'Meteorite strike', 'Radiation - M.U.L.E. goes crazy', 'Fire in the store']
 
-month_event = ['']
+month_event = ['Landing on the planet Irata']
+event_label_colors = ['gray']
 
 def read_mule_game_file(file_path: str) -> dict:
 	try:
@@ -125,7 +127,38 @@ def process_mule_game_data(mule_game_data: dict):
 				if month_event_id == 290:
 					month_event.append(month_events[month_event_parameters[0]])
 
+		# the three player-specific events below assume that the player with the plot at the end of the game
+		# is the same one who had the plot at the time of the event.
 
+					# for pest attack, decide which player got nailed, set color for "pest attack" axis label
+					if month_event_parameters[0] == 0:
+						for player_index in range(len(players_data)):
+							current_player_data: dict[str] = players_data[player_index]
+							owned_plots: list[dict[str]] = current_player_data["ownedPlotTypes"]
+
+							if str(month_event_parameters[1]) in owned_plots:
+								event_label_colors.append(player_color[player_index])
+
+					# for "M.U.L.E. goes crazy," decide which poor player lost their M.U.L.E., set label color
+					elif month_event_parameters[0] == 6:
+						for player_index in range(len(players_data)):
+							current_player_data: dict[str] = players_data[player_index]
+							owned_plots: list[dict[str]] = current_player_data["ownedPlotTypes"]
+
+							if str(month_event_parameters[1]) in owned_plots:
+								event_label_colors.append(player_color[player_index])
+
+					# for meteorite strike, decide which lucky/unlucky player ends up with this plot, set label color
+					elif month_event_parameters[0] == 5:
+						for player_index in range(len(players_data)):
+							current_player_data: dict[str] = players_data[player_index]
+							owned_plots: list[dict[str]] = current_player_data["ownedPlotTypes"]
+
+							if str(month_event_parameters[1]) in owned_plots:
+								event_label_colors.append(player_color[player_index])
+
+					else:
+						event_label_colors.append('black')
 
 
 # Example usage:
@@ -147,6 +180,9 @@ if __name__ == "__main__":
 
 	process_mule_game_data(mule_game_data)
 
+	month_event.append('The ship has returned!')
+	event_label_colors.append('gray')
+
 	# Create plot using matplotlib package
 	fig, ax = plt.subplots(figsize=(10,6))
 	plt.subplots_adjust(bottom=0.4)
@@ -155,5 +191,7 @@ if __name__ == "__main__":
 	ax.legend(player_name)
 	ax.set_ylabel("Total Wealth")
 	ax.tick_params(axis = 'x', labelrotation = 80)
-	ax.set_xticks(np.arange(0, 12, 1), month_event)
+	ax.set_xticks(np.arange(0, 13, 1), month_event)
+	for i in range(13) :
+		ax.get_xticklabels()[i].set_color(event_label_colors[i])
 	plt.show()
