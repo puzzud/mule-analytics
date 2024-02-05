@@ -1,6 +1,6 @@
 # mule_basic_plot.py
 # imports a M.U.L.E. game file and plots out total wealth (money + land + goods) month by month
-#
+# as well as monthly events color-coded by player
 
 import json
 import sys
@@ -13,7 +13,6 @@ scores = [[0 for i in range(13)] for j in range(4)]
 player_species = ['Mechtron', 'Gollumer', 'Packer', 'Bonzoid', 'Spheroid', 'Flapper', 'Leggite', 'Humanoid']
 
 # player_colors is list that really contains only 4 colors, but due to C64 indexing requires 9 values
-
 player_colors = ['', '', '', '', 'magenta', 'green', 'blue', '', 'red']
 
 # empty lists for colors and names (indexed to player). Probably a more elegant way to do this...
@@ -21,10 +20,10 @@ player_color = ['', '', '', '']
 player_name = ['', '', '', '']
 
 # list of possible monthly events
-
 month_events = ['Pest attack', 'Pirate ship', 'Acid rain storm', 'Planetquake', 'Sunspot activity',
 				  'Meteorite strike', 'Radiation - M.U.L.E. goes crazy', 'Fire in the store']
 
+# initial values on month 0
 month_event = ['Landing on the planet Irata']
 event_label_colors = ['gray']
 
@@ -71,7 +70,6 @@ def process_mule_game_data(mule_game_data: dict):
 			good_amount = good_amounts[good_type]
 	
 	# Game round status summaries
-	
 	history_data: dict[str] = mule_game_data["history"]
 	rounds_data: list[dict[str]] = history_data["rounds"]
 	for round_number in range(len(rounds_data)):
@@ -160,6 +158,24 @@ def process_mule_game_data(mule_game_data: dict):
 					else:
 						event_label_colors.append('black')
 
+def plot_mule_game_data():
+	# Create plot using matplotlib package
+
+	month_event.append('The ship has returned!')
+	event_label_colors.append('gray')
+
+	fig, ax = plt.subplots(figsize=(10, 10))
+	plt.subplots_adjust(bottom=0.4)
+	for player_plot in range(4):
+		ax.plot(scores[player_plot], player_color[player_plot], marker='o', label=player_name[player_plot])
+	ax.legend(player_name)
+	ax.set_ylabel("Total Wealth")
+	ax.tick_params(axis='x', labelrotation = 80)
+	ax.set_xticks(np.arange(0, 13, 1), month_event)
+	for i in range(13):
+		ax.get_xticklabels()[i].set_color(event_label_colors[i])
+	ax.set_title(mule_game_data["name"])
+	plt.show()
 
 # Example usage:
 # python mule_basic_plot.py path/to/1234.mulegame
@@ -180,18 +196,6 @@ if __name__ == "__main__":
 
 	process_mule_game_data(mule_game_data)
 
-	month_event.append('The ship has returned!')
-	event_label_colors.append('gray')
+	plot_mule_game_data()
 
-	# Create plot using matplotlib package
-	fig, ax = plt.subplots(figsize=(10, 6))
-	plt.subplots_adjust(bottom=0.4)
-	for player_plot in range(4):
-		ax.plot(scores[player_plot], player_color[player_plot], marker='o', label=player_name[player_plot])
-	ax.legend(player_name)
-	ax.set_ylabel("Total Wealth")
-	ax.tick_params(axis='x', labelrotation = 80)
-	ax.set_xticks(np.arange(0, 13, 1), month_event)
-	for i in range(13):
-		ax.get_xticklabels()[i].set_color(event_label_colors[i])
-	plt.show()
+
