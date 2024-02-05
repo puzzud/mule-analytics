@@ -1,6 +1,7 @@
-# mule_basic_plot.py
-# imports a M.U.L.E. game file and plots out total wealth (money + land + goods) month by month
-# as well as monthly events color-coded by player
+# mule_game_plot.py
+# imports a M.U.L.E. game file and makes two graphs:
+# 1) total wealth (money + land + goods) month by month plus monthly events color-coded by player
+# 2) per-player summary graphs (total, money, land and goods) and individual player turn events
 
 import json
 import sys
