@@ -232,7 +232,7 @@ def plot_mule_game_data():
 	fig, ax = plt.subplots(figsize=(10, 8))
 	plt.subplots_adjust(bottom=0.3)
 	for player_graph in range(4):
-		ax.plot(scores[player_graph], player_color[player_graph], marker='o', label=player_name[player_graph])
+		ax.plot(scores[player_graph], player_color[player_graph], marker='.', label=player_name[player_graph])
 
 	ax.legend(player_name)
 	ax.set_ylabel("Total Wealth")
@@ -253,12 +253,13 @@ def plot_mule_round_data():
 		yindex = player_graph-xindex
 		if yindex == 2:
 			yindex = 0
-		ax[xindex, yindex].plot(money[player_graph], label='money')
-		ax[xindex, yindex].plot(land[player_graph], label='land')
-		ax[xindex, yindex].plot(goods[player_graph], label='goods')
+		ax[xindex, yindex].plot(scores[player_graph], player_color[player_graph], alpha=0.6, marker='|', label='total')
+		ax[xindex, yindex].plot(money[player_graph], player_color[player_graph], alpha=1.0, label='money')
+		ax[xindex, yindex].plot(land[player_graph], player_color[player_graph], alpha=0.4, label='land')
+		ax[xindex, yindex].plot(goods[player_graph], player_color[player_graph], alpha=0.3, label='goods', ls='--')
 		ax[xindex, yindex].set_xticks(np.arange(0, 13, 1))
-		ax[xindex, yindex].legend()
-		ax[xindex, yindex].set_title(player_name[player_graph])
+		ax[xindex, yindex].legend(loc='upper left')
+		ax[xindex, yindex].set_title(player_name[player_graph], color=player_color[player_graph])
 
 		for i in range(0, len(turn_events), 3):
 			txt1 = []
