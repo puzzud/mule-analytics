@@ -15,7 +15,7 @@ money = [[0 for i in range(13)] for j in range(4)]
 goods = [[0 for i in range(13)] for j in range(4)]
 land = [[0 for i in range(13)] for j in range(4)]
 
-player_species = ['Mechtron', 'Gollumer', 'Packer', 'Bonzoid', 'Spheroid', 'Flapper', 'Leggite', 'Humanoid']
+species = ['Mechtron', 'Gollumer', 'Packer', 'Bonzoid', 'Spheroid', 'Flapper', 'Leggite', 'Humanoid']
 
 # player_colors is list that really contains only 4 colors, but due to C64 indexing requires 9 values
 player_colors = ['', '', '', '', 'magenta', 'green', 'blue', '', 'red']
@@ -23,6 +23,7 @@ player_colors = ['', '', '', '', 'magenta', 'green', 'blue', '', 'red']
 # empty lists for colors and names (indexed to player). Probably a more elegant way to do this...
 player_color = ['', '', '', '']
 player_name = ['', '', '', '']
+player_species = ['', '', '', '']
 
 # list of possible monthly events
 month_events = ['Pest attack', 'Pirate ship', 'Acid rain storm', 'Planetquake', 'Sunspot activity',
@@ -70,7 +71,6 @@ def read_mule_game_file(file_path: str) -> dict:
 	
 	return None
 
-
 def process_mule_game_data(mule_game_data: dict):
 	print("Client Version: %s" % (mule_game_data["version"]["client"]))
 
@@ -93,8 +93,10 @@ def process_mule_game_data(mule_game_data: dict):
 
 		if input_type == 255:
 			player_name[player_index] = "Computer"
+			player_species[player_index] = "Mechtron"
 		else:
-			player_name[player_index] = input("Who was playing the " + player_color[player_index] + " " + player_species[species_id]+ "? ")
+			player_name[player_index] = input("Who was playing the " + player_color[player_index] + " " + species[species_id]+ "? ")
+			player_species[player_index] = species[species_id]
 
 		good_amounts: list[int] = current_player_data["goodAmounts"]
 		for good_type in range(len(good_amounts)):
@@ -260,7 +262,7 @@ def plot_mule_round_data():
 		ax[xindex, yindex].plot(goods[player_graph], player_color[player_graph], alpha=0.3, label='goods', ls='--')
 		ax[xindex, yindex].set_xticks(np.arange(0, 13, 1))
 		ax[xindex, yindex].legend(loc='upper left')
-		ax[xindex, yindex].set_title(player_name[player_graph], color=player_color[player_graph])
+		ax[xindex, yindex].set_title(player_name[player_graph]+" ("+player_color[player_graph]+" "+player_species[player_graph]+")", color=player_color[player_graph])
 
 		for i in range(0, len(turn_events), 3):
 			txt1 = []
