@@ -31,6 +31,7 @@ month_events = ['Pest attack', 'Pirate ship', 'Acid rain storm', 'Planetquake', 
 
 turn_events = []
 txt = []
+xlabels = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', 'END']
 
 turn_events_list = ['YOU JUST RECEIVED A PACKAGE FROM YOUR HOME-WORLD RELATIVES CONTAINING 3 FOOD AND 2 ENERGY UNITS.',
 			   'A WANDERING SPACE TRAVELER REPAID YOUR HOSPITALITY BY LEAVING TWO BARS OF SMITHORE.',
@@ -251,6 +252,7 @@ def plot_mule_round_data():
 	# Plot individual round data for each player
 
 	fig, ax = plt.subplots(2,2, sharey=True, figsize=(10, 10))
+	fig.supxlabel('Status #')
 	for player_graph in range(4):
 		xindex = int(player_graph/2)
 		yindex = player_graph-xindex
@@ -260,14 +262,15 @@ def plot_mule_round_data():
 		ax[xindex, yindex].plot(money[player_graph], player_color[player_graph], alpha=1.0, label='money')
 		ax[xindex, yindex].plot(land[player_graph], player_color[player_graph], alpha=0.4, label='land')
 		ax[xindex, yindex].plot(goods[player_graph], player_color[player_graph], alpha=0.3, label='goods', ls='--')
-		ax[xindex, yindex].set_xticks(np.arange(0, 13, 1))
+		ax[xindex, yindex].set_xticks(np.arange(0, 13, 1), xlabels)
 		ax[xindex, yindex].legend(loc='upper left')
 		ax[xindex, yindex].set_title(player_name[player_graph]+" ("+player_color[player_graph]+" "+player_species[player_graph]+")", color=player_color[player_graph])
 
 		for i in range(0, len(turn_events), 3):
 			txt1 = []
 			if turn_events[i] == player_graph:
-				ax[xindex, yindex].axvline(x=turn_events[i+1], color='gray', ls=':', alpha=0.5)
+#				ax[xindex, yindex].axvline(x=turn_events[i+1]-1, color='gray', ls=':', alpha=0.5)
+				ax[xindex, yindex].axvspan(xmin=turn_events[i+1]-1, xmax=turn_events[i+1], color='gray', ls=':', alpha=0.2)
 				txt1.append(turn_events[i+2])
 				txt = '\n'.join(txt1)
 				print(txt)
