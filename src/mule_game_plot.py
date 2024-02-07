@@ -191,41 +191,23 @@ def process_mule_game_data(mule_game_data: dict):
 				elif month_event_id == 290:
 					month_event.append(month_events[month_event_parameters[0]])
 
-		# the three player-specific events below assume that the player with the plot at the end of the game
-		# is the same one who had the plot at the time of the event.
+				# the three player-specific events below assume that the player with the plot at the end of the game
+				# is the same one who had the plot at the time of the event.
 
-					# for pest attack, decide which player got nailed, set color for "pest attack" axis label
-					if month_event_parameters[0] == 0:
+					# for pest attack (event 0), meteorite strike (event 5), and "M.U.L.E. goes crazy" (event 6),
+					# decide which player got nailed, set color for axis label
+
+					temp_events = [0, 5, 6]
+					if month_event_parameters[0] in temp_events:
 						for player_index in range(len(players_data)):
 							current_player_data: dict[str] = players_data[player_index]
 							owned_plots: list[dict[str]] = current_player_data["ownedPlotTypes"]
 
 							if str(month_event_parameters[1]) in owned_plots:
 								event_label_colors.append(player_color[player_index])
-
-					# for "M.U.L.E. goes crazy," decide which poor player lost their M.U.L.E., set label color
-					elif month_event_parameters[0] == 6:
-						for player_index in range(len(players_data)):
-							current_player_data: dict[str] = players_data[player_index]
-							owned_plots: list[dict[str]] = current_player_data["ownedPlotTypes"]
-
-							if str(month_event_parameters[1]) in owned_plots:
-								event_label_colors.append(player_color[player_index])
-
-					# for meteorite strike, decide which lucky/unlucky player ends up with this plot, set label color
-					elif month_event_parameters[0] == 5:
-						for player_index in range(len(players_data)):
-							current_player_data: dict[str] = players_data[player_index]
-							owned_plots: list[dict[str]] = current_player_data["ownedPlotTypes"]
-
-							if str(month_event_parameters[1]) in owned_plots:
-								event_label_colors.append(player_color[player_index])
-
 					else:
 						event_label_colors.append('black')
 						break
-
-
 
 def plot_mule_game_data():
 	# Create plot using matplotlib package
@@ -259,9 +241,9 @@ def plot_mule_round_data():
 		if yindex == 2:
 			yindex = 0
 		ax[xindex, yindex].plot(scores[player_graph], player_color[player_graph], alpha=0.6, marker='|', label='total')
-		ax[xindex, yindex].plot(money[player_graph], player_color[player_graph], alpha=1.0, label='money')
-		ax[xindex, yindex].plot(land[player_graph], player_color[player_graph], alpha=0.4, label='land')
-		ax[xindex, yindex].plot(goods[player_graph], player_color[player_graph], alpha=0.3, label='goods', ls='--')
+		ax[xindex, yindex].plot(money[player_graph], player_color[player_graph], alpha=0.4, label='money')
+		ax[xindex, yindex].plot(land[player_graph], player_color[player_graph], alpha=0.2, label='land')
+		ax[xindex, yindex].plot(goods[player_graph], player_color[player_graph], alpha=0.8, label='goods', ls='--')
 		ax[xindex, yindex].set_xticks(np.arange(0, 13, 1), xlabels)
 		ax[xindex, yindex].legend(loc='upper left')
 		ax[xindex, yindex].set_title(player_name[player_graph]+" ("+player_color[player_graph]+" "+player_species[player_graph]+")", color=player_color[player_graph])
@@ -269,8 +251,11 @@ def plot_mule_round_data():
 		for i in range(0, len(turn_events), 3):
 			txt1 = []
 			if turn_events[i] == player_graph:
-#				ax[xindex, yindex].axvline(x=turn_events[i+1]-1, color='gray', ls=':', alpha=0.5)
+
+			# create a gray bar indicating the development phase between "status" screens
+			# (which is when these events occur)
 				ax[xindex, yindex].axvspan(xmin=turn_events[i+1]-1, xmax=turn_events[i+1], color='gray', ls=':', alpha=0.2)
+
 				txt1.append(turn_events[i+2])
 				txt = '\n'.join(txt1)
 				print(txt)
