@@ -1,8 +1,58 @@
+from enum import Enum
 from typing import Callable
 import json
 
+import mule
+from .game_state import GameState
 
-class game_history:
+
+# TODO: Referring to these screen IDs as
+# "history" as they are not consistent with
+# how screens are ID'd in MULE Online
+# (technically a bug). So it will need to
+# make this abstraction or kill compatibility
+# with any client using this constants.
+class GameHistoryScreenId(Enum):
+	GAME_HISTORY_SCREEN_ID_STATUS:      int = 0
+	GAME_HISTORY_SCREEN_ID_DEVELOPMENT: int = 2
+	GAME_HISTORY_SCREEN_ID_AUCTION:     int = 3
+
+
+class GameHistoryEventId(Enum):
+	GAME_HISTORY_EVENT_ID_NONE:                        int = -1
+#	GAME_HISTORY_EVENT_ID_INIT_TOWN_GOODS_AMOUNT:      int = 30
+#	GAME_HISTORY_EVENT_ID_INIT_PLANETEER_GOODS_AMOUNT: int = 40
+#	GAME_HISTORY_EVENT_ID_INIT_PLANETEER_MONEY_AMOUNT: int = 41
+#	GAME_HISTORY_EVENT_ID_ROUND_GOODS_VALUATION:       int = 50
+#	GAME_HISTORY_EVENT_ID_ROUND_MULE_PRODUCTION:       int = 75
+#	GAME_HISTORY_EVENT_ID_ROUND_MULE_VALUATION:        int = 76
+	GAME_HISTORY_EVENT_ID_ROUND_SCORE:                 int = 150
+#	GAME_HISTORY_EVENT_ID_LAND_GRANT:                  int = 200
+#	GAME_HISTORY_EVENT_ID_LAND_AUCTION:                int = 201
+#	GAME_HISTORY_EVENT_ID_TURN_START:                  int = 210
+#	GAME_HISTORY_EVENT_ID_TURN_END:                    int = 211
+	GAME_HISTORY_EVENT_ID_TURN_EVENT:                  int = 215
+#	GAME_HISTORY_EVENT_ID_TURN_TOWN_MULE_TRADE:        int = 220
+#	GAME_HISTORY_EVENT_ID_TURN_TOWN_MULE_OUTFIT:       int = 221
+#	GAME_HISTORY_EVENT_ID_TURN_PLOT_MULE_TRANSFER:     int = 230
+	GAME_HISTORY_EVENT_ID_TURN_PLOT_ASSAY_RESULT:      int = 240
+#	GAME_HISTORY_EVENT_ID_TURN_PLOT_FOR_SALE_MARK:     int = 250
+#	GAME_HISTORY_EVENT_ID_TURN_WAMPUS_MOVE:            int = 260
+#	GAME_HISTORY_EVENT_ID_TURN_WAMPUS_CAUGHT:          int = 270
+#	GAME_HISTORY_EVENT_ID_ROUND_PRODUCTION:            int = 280
+	GAME_HISTORY_EVENT_ID_ROUND_EVENT:                 int = 290
+#	GAME_HISTORY_EVENT_ID_AUCTION_STORE_PRICES:        int = 300
+#	GAME_HISTORY_EVENT_ID_AUCTION_STATUS_PREVIOUS:     int = 310
+#	GAME_HISTORY_EVENT_ID_AUCTION_STATUS_USAGE:        int = 311
+#	GAME_HISTORY_EVENT_ID_AUCTION_STATUS_SPOILAGE:     int = 312
+#	GAME_HISTORY_EVENT_ID_AUCTION_STATUS_PRODUCTION:   int = 313
+#	GAME_HISTORY_EVENT_ID_AUCTION_STATUS_SURPLUS:      int = 314
+#	GAME_HISTORY_EVENT_ID_AUCTION_DECLARE:             int = 320
+#	GAME_HISTORY_EVENT_ID_AUCTION_SKIP:                int = 330
+#	GAME_HISTORY_EVENT_ID_AUCTION_TRADE_GOOD:          int = 340
+
+
+class GameHistory:
 	def __init__(self, input = None):
 		self.client_version = ""
 		self.game_name = ""
@@ -19,18 +69,7 @@ class game_history:
 		self._screen_index: int = 0
 		self._screen_event_index: int = 0
 
-		self._game_state = {}
-		self.planeteers_money_amount: list[int] = [0, 0, 0, 0]
-		self.planeteers_good_amount: list[list[int]] = [
-			[0, 0, 0, 0],
-			[0, 0, 0, 0],
-			[0, 0, 0, 0],
-			[0, 0, 0, 0]
-		]
-		self.planeteers_score_money: list[int] = [0, 0, 0, 0]
-		self.planeteers_score_land: list[int] = [0, 0, 0, 0]
-		self.planeteers_score_goods: list[int] = [0, 0, 0, 0]
-		self.planeteers_rank: list[int] = [0, 0, 0, 0]
+		self.game_state = GameState()
 
 		if input != None:
 			if isinstance(input, str):
@@ -62,14 +101,14 @@ class game_history:
 		self.game_name = json_data["name"]
 
 		self._settings_data = json_data["settings"]
-		self._player_data: dict[str] = json_data["player"]
+		self._player_data = json_data["player"]
 		self._history_data = json_data["history"]
 		self._planet_data = json_data["planet"]
 		self._store_data = json_data["store"]
 
 		self._populated = True
 
-		self.clear_game_state()
+		self.reset_game_state()
 		self.set_round_number(0)
 
 
@@ -85,7 +124,7 @@ class game_history:
 		round_number_offset = round_number - self._round_number
 		
 		if round_number == 0:
-			self.clear_game_state()
+			self.reset_game_state()
 
 		if round_number_offset == 0:
 			return
@@ -94,7 +133,7 @@ class game_history:
 			# NOTE: If going backwards from current round number, reset to round 0 and work upwards.
 			# TODO: Work backwards by rolling back events in reverse, unless going back to 0.
 			# NOTE: Can only work backwards if history events that affect game state are all implemented.
-			self.clear_game_state()
+			self.reset_game_state()
 			self.set_round_number(round_number)
 			return
 
@@ -159,8 +198,7 @@ class game_history:
 		if round_number < 0:
 			round_number = self._round_number
 
-		# TODO: Get from constant.
-		return self.get_round_screen_events_data_by_id(0, round_number)
+		return self.get_round_screen_events_data_by_id(GameHistoryScreenId.GAME_HISTORY_SCREEN_ID_STATUS, round_number)
 
 
 	def process_round_screen_events(self) -> None:
@@ -176,7 +214,7 @@ class game_history:
 			while self._screen_event_index < len(screen_events_data):
 				screen_event_data = screen_events_data[self._screen_event_index]
 
-				screen_event_id: int = screen_event_data["id"]
+				screen_event_id: GameHistoryEventId = screen_event_data["id"]
 				screen_event_parameters: list[int] = screen_event_data["parameters"]
 
 				self.process_screen_event(screen_event_id, screen_event_parameters)
@@ -186,9 +224,10 @@ class game_history:
 			self._screen_index += 1
 
 
-	def process_screen_event(self, screen_event_id: int, screen_event_parameters: list[int]) -> None:
+	def process_screen_event(self, screen_event_id: GameHistoryEventId, screen_event_parameters: list[int]) -> None:
 		method = self.process_screen_event_methods.get(screen_event_id)
 		if method == None:
+			#print("GameHistory::process_screen_event: event ID not supported: %d" % (screen_event_id))
 			return
 	
 		method(self, screen_event_parameters)
@@ -196,31 +235,33 @@ class game_history:
 
 	def process_screen_event_status_score(self, screen_event_parameters: list[int]) -> None:
 		colony_score: int = 0
+		planeteers_rank = [0 for _ in range(mule.MAX_NUMBER_OF_PLAYERS)]
 
-		# TODO: Add constants.
-		for player_index in range(4):
+		# TODO: Add constants for parameter offsets.
+		for player_index in range(mule.MAX_NUMBER_OF_PLAYERS):
 			score_event_parameter_player_offset_index = player_index * 3
+			
 			score_money = screen_event_parameters[score_event_parameter_player_offset_index + 0]
 			score_land = screen_event_parameters[score_event_parameter_player_offset_index + 1]
 			score_goods = screen_event_parameters[score_event_parameter_player_offset_index + 2]
 
 			colony_score += score_money + score_land + score_goods
 
-			self.set_planeteer_scores(player_index, score_money, score_land, score_goods)
+			self.game_state.set_planeteer_scores(player_index, score_money, score_land, score_goods)
 
-			self.planeteers_rank[player_index] = screen_event_parameters[13 + player_index]
+			planeteers_rank[player_index] = screen_event_parameters[13 + player_index]
 
-		self.colony_score = colony_score
-		self.colony_score_rating: int = screen_event_parameters[12]
+		self.game_state.set_planeteers_rank(planeteers_rank)
+
+		self.game_state.set_colony_score(colony_score)
+		self.game_state.set_colony_score_rating(screen_event_parameters[12])
 
 
 	process_screen_event_methods: dict[int, Callable] = {
-		# TODO: Need to create a constant.
-		150: process_screen_event_status_score,
+		GameHistoryEventId.GAME_HISTORY_EVENT_ID_ROUND_SCORE.value: process_screen_event_status_score,
 	}
 
 
-	# TODO: Use constants.
 	def get_setting_play_level(self) -> int:
 		return self._settings_data["playLevel"]
 
@@ -248,52 +289,21 @@ class game_history:
 		return player_data["speciesId"]
 
 
-	# Game State
-	def populate_final_game_state(self) -> None:
-		# TODO:
-		print("Error: Final game state population not implemented")
-
-
-	def clear_game_state(self) -> None:
+	def reset_game_state(self) -> None:
 		self._round_number = 0
 		self._screen_index = 0
 		self._screen_event_index = 0
 
-		# TODO:
-		print("Error: clear_game_state not fully implemented")
-
-
-	def get_planeteer_money_amount(self, player_index: int) -> int:
-		#return current_player_data["moneyAmount"]
-		return self.planeteers_money_amount[player_index]
-
-
-	def set_planeteer_money_amount(self, player_index: int, amount: int) -> None:
-		self.planeteers_money_amount[player_index] = amount
-
-
-	def get_planeteer_good_amount(self, player_index: int, good_type: int) -> int:
-		#return current_player_data["goodAmounts"]
-		return self.planeteers_good_amount[good_type][player_index]
+		self.game_state.reset()
 	
 
-	def set_planeteer_good_amount(self, player_index: int, good_type: int, amount: int) -> None:
-		self.planeteers_money_amount[good_type][player_index] = amount
+	# TODO: This method only needed while all game state affecting history events are not
+	# implemented fully.
+	def populate_final_game_state(self) -> None:
+		for player_index in range(mule.MAX_NUMBER_OF_PLAYERS):
+			player_data = self._get_player_data(player_index)
+			self.game_state.set_planeteer_money_amount(player_index, player_data["moneyAmount"])
 
-
-	def get_planeteer_score_money(self, player_index: int) -> int:
-		return self.planeteers_score_money[player_index]
-
-
-	def get_planeteer_score_land(self, player_index: int) -> int:
-		return self.planeteers_score_land[player_index]
-	
-
-	def get_planeteer_score_goods(self, player_index: int) -> int:
-		return self.planeteers_score_goods[player_index]
-
-
-	def set_planeteer_scores(self, player_index: int, score_money: int, score_land: int, score_goods: int) -> None:
-		self.planeteers_score_money[player_index] = score_money
-		self.planeteers_score_land[player_index] = score_land
-		self.planeteers_score_goods[player_index] = score_goods
+			player_data_good_amounts: list[int] = player_data["goodAmounts"]
+			for good_type in range(mule.NUMBER_OF_GOOD_TYPES):
+				self.game_state.set_planeteer_good_amount(player_index, good_type, player_data_good_amounts[good_type])
