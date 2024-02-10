@@ -149,11 +149,6 @@ class GameHistory:
 		self._screen_index = 0
 		self._screen_event_index = 0
 
-		# TODO: This logic will not be needed when history processing is fully implemented
-		# and represents the final game state after all screen events have been processed.
-		if round_number >= self.get_number_of_rounds() - 1:
-			self.populate_final_game_state()
-
 
 	def get_rounds_data(self) -> list[dict[str]]:
 		return self._history_data["rounds"]
@@ -222,6 +217,11 @@ class GameHistory:
 				self._screen_event_index += 1
 			
 			self._screen_index += 1
+		
+		# TODO: This logic will not be needed when history processing is fully implemented
+		# and represents the final game state after all screen events have been processed.
+		if self._round_number >= self.get_number_of_rounds() - 1:
+			self.populate_final_game_state()
 
 
 	def process_screen_event(self, screen_event_id: GameHistoryEventId, screen_event_parameters: list[int]) -> None:
@@ -240,7 +240,7 @@ class GameHistory:
 		# TODO: Add constants for parameter offsets.
 		for player_index in range(mule.MAX_NUMBER_OF_PLAYERS):
 			score_event_parameter_player_offset_index = player_index * 3
-			
+
 			score_money = screen_event_parameters[score_event_parameter_player_offset_index + 0]
 			score_land = screen_event_parameters[score_event_parameter_player_offset_index + 1]
 			score_goods = screen_event_parameters[score_event_parameter_player_offset_index + 2]
