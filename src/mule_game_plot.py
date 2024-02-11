@@ -6,7 +6,9 @@
 import json
 import sys
 import matplotlib.pyplot as plt
+import matplotlib.text as mtext
 import numpy as np
+
 
 # array for storing total values by month
 scores = [[0 for i in range(13)] for j in range(4)]
@@ -39,10 +41,10 @@ turn_events_list = ['YOU JUST RECEIVED A PACKAGE FROM YOUR HOME-WORLD RELATIVES 
 			   'YOUR MULE WAS JUDGED "BEST BUILT" AT THE COLONY FAIR. YOU WON ${0}.',
 			   'ONE OF YOUR MULES LOST A BOLT. REPAIRS COST YOU ${0}.',
 			   'YOUR MULE WON THE COLONY TAP-DANCING CONTEST. YOU COLLECTED ${0}.',
-			   'YOUR MINING MULES HAVE DETERIORATED FROM HEAVY USE AND COST ${0} EACH TO REPAIR. THE TOTAL COST IS ${1}.',
-			   'THE SOLAR COLLECTORS ON YOUR ENERGY MULES ARE DIRTY. CLEANING COST YOU ${0} EACH FOR A TOTAL OF ${1}.',
-			   'THE COLONY COUNCIL FOR AGRICULTURE AWARDED YOU ${0} FOR EACH FOOD PLOT YOU HAVE DEVELOPED. THE TOTAL GRANT IS ${1}.',
-			   'THE COLONY AWARDED YOU #1 FOR STOPPING THE WART WORM INFESTATION.',
+			   'YOUR MINING MULES HAVE DETERIORATED FROM HEAVY USE AND COST \\${0} EACH TO REPAIR. THE TOTAL COST IS \\${1}.',
+			   'THE SOLAR COLLECTORS ON YOUR ENERGY MULES ARE DIRTY. CLEANING COST YOU \\${0} EACH FOR A TOTAL OF \\${1}.',
+			   'THE COLONY COUNCIL FOR AGRICULTURE AWARDED YOU \\${0} FOR EACH FOOD PLOT YOU HAVE DEVELOPED. THE TOTAL GRANT IS \\${1}.',
+			   'THE COLONY AWARDED YOU ${0} FOR STOPPING THE WART WORM INFESTATION.',
 			   'THE MUSEUM BOUGHT YOUR ANTIQUE PERSONAL COMPUTER FOR ${0}.',
 			   'YOU WON THE COLONY SWAMP EEL EATING CONTEST AND COLLECTED ${0}. (YUCK!).',
 			   'A CHARITY FROM YOUR HOME-WORLD TOOK PITY ON YOU AND SENT ${0}.',
@@ -57,8 +59,38 @@ turn_events_list = ['YOU JUST RECEIVED A PACKAGE FROM YOUR HOME-WORLD RELATIVES 
 			   'YOU RECEIVED AN EXTRA PLOT OF LAND TO ENCOURAGE COLONY DEVELOPMENT.']
 
 # initial values on month 0
-month_event = ['Landing on the planet Irata']
-event_label_colors = ['gray']
+# month_event = ['Landing on the planet Irata']
+month_event = []
+event_label_colors = []
+
+class WrapText(mtext.Text):
+    """
+    WrapText(x, y, s, width, widthcoords, **kwargs)
+    x, y       : position (default transData)
+    text       : string
+    width      : box width
+    widthcoords: coordinate system (default screen pixels)
+    **kwargs   : sent to matplotlib.text.Text
+    Return     : matplotlib.text.Text artist
+    """
+    def __init__(self,
+                 x=0, y=0, text='',
+                 width=0,
+                 widthcoords=None,
+                 **kwargs):
+        mtext.Text.__init__(self,
+                 x=x, y=y, text=text,
+                 wrap=True,
+                 clip_on=False,
+                 **kwargs)
+        if not widthcoords:
+            self.width = width
+        else:
+            a = widthcoords.transform_point([(0,0),(width,0)])
+            self.width = a[1][0]-a[0][0]
+
+    def _get_wrap_line_width(self):
+        return self.width
 
 def read_mule_game_file(file_path: str) -> dict:
 	try:
@@ -164,7 +196,8 @@ def process_mule_game_data(mule_game_data: dict):
 					if len(month_event_parameters) == 2:
 						name_param = player_name[month_event_parameters[1]]
 						event_name_param = turn_events_list[month_event_parameters[0]]
-						turn_event = name_param + ': In month ' + str(round_number) + ', ' + event_name_param
+						turn_event1 = name_param + ': In month ' + str(round_number) + ', ' + event_name_param
+						turn_event = str(round_number) + ' - ' + event_name_param
 						turn_events.append(month_event_parameters[1])
 						turn_events.append(round_number)
 						turn_events.append(turn_event)
@@ -173,7 +206,8 @@ def process_mule_game_data(mule_game_data: dict):
 						name_param = player_name[month_event_parameters[2]]
 						event_name_param = turn_events_list[month_event_parameters[0]]
 						money1 = str(month_event_parameters[1])
-						turn_event = name_param + ': In month ' + str(round_number) + ', ' + event_name_param.format(money1)
+						turn_event1 = name_param + ': In month ' + str(round_number) + ', ' + event_name_param.format(money1)
+						turn_event = str(round_number) + ' - ' + event_name_param.format(money1)
 						turn_events.append(month_event_parameters[2])
 						turn_events.append(round_number)
 						turn_events.append(turn_event)
@@ -183,7 +217,8 @@ def process_mule_game_data(mule_game_data: dict):
 						event_name_param = turn_events_list[month_event_parameters[0]]
 						money1 = str(month_event_parameters[1])
 						money2 = str(month_event_parameters[2])
-						turn_event = name_param + ': In month ' + str(round_number) + ', ' + event_name_param.format(money1, money2)
+						turn_event1 = name_param + ': In month ' + str(round_number) + ', ' + event_name_param.format(money1, money2)
+						turn_event = str(round_number) + ' - ' + event_name_param.format(money1, money2)
 						turn_events.append(month_event_parameters[3])
 						turn_events.append(round_number)
 						turn_events.append(turn_event)
@@ -214,6 +249,8 @@ def plot_mule_game_data():
 
 	month_event.append('The ship has returned!')
 	event_label_colors.append('gray')
+	month_event.append('Final status')
+	event_label_colors.append('orange')
 
 	fig, ax = plt.subplots(figsize=(10, 8))
 	plt.subplots_adjust(bottom=0.3)
@@ -228,39 +265,48 @@ def plot_mule_game_data():
 		ax.get_xticklabels()[i].set_color(event_label_colors[i])
 
 	ax.set_title(mule_game_data["name"])
-	plt.show()
+	plt.savefig(mule_game_data["name"]+'_summary.png', dpi=200)
+#	plt.show()
 
 def plot_mule_round_data():
 	# Plot individual round data for each player
 
-	fig, ax = plt.subplots(2,2, sharey=True, figsize=(10, 10))
-	fig.supxlabel('Status #')
+	fig, ax = plt.subplots(2,2, sharey=True, figsize=(10, 11))
+	plt.rcParams['text.usetex'] = False
+	plt.subplots_adjust(left=0.125, right=0.9, bottom=0.2, top=0.95, hspace=0.8)
+
 	for player_graph in range(4):
 		xindex = int(player_graph/2)
 		yindex = player_graph-xindex
 		if yindex == 2:
 			yindex = 0
-		ax[xindex, yindex].plot(scores[player_graph], player_color[player_graph], alpha=0.6, marker='|', label='total')
-		ax[xindex, yindex].plot(money[player_graph], player_color[player_graph], alpha=0.4, label='money')
-		ax[xindex, yindex].plot(land[player_graph], player_color[player_graph], alpha=0.2, label='land')
+		ax[xindex, yindex].plot(scores[player_graph], player_color[player_graph], alpha=0.4, marker='|', label='total')
+		ax[xindex, yindex].plot(money[player_graph], player_color[player_graph], alpha=0.6, label='money')
+		ax[xindex, yindex].plot(land[player_graph], player_color[player_graph], alpha=0.3, label='land')
 		ax[xindex, yindex].plot(goods[player_graph], player_color[player_graph], alpha=0.8, label='goods', ls='--')
 		ax[xindex, yindex].set_xticks(np.arange(0, 13, 1), xlabels)
 		ax[xindex, yindex].legend(loc='upper left')
 		ax[xindex, yindex].set_title(player_name[player_graph]+" ("+player_color[player_graph]+" "+player_species[player_graph]+")", color=player_color[player_graph])
 
+		txt1 = []
+
 		for i in range(0, len(turn_events), 3):
-			txt1 = []
 			if turn_events[i] == player_graph:
 
 			# create a gray bar indicating the development phase between "status" screens
 			# (which is when these events occur)
 				ax[xindex, yindex].axvspan(xmin=turn_events[i+1]-1, xmax=turn_events[i+1], color='gray', ls=':', alpha=0.2)
 
+
 				txt1.append(turn_events[i+2])
 				txt = '\n'.join(txt1)
-				print(txt)
+#		print(txt)
 
-	plt.show()
+		ax[xindex,yindex].add_artist(WrapText(0, -0.68, txt, stretch=200, color=player_color[player_graph], fontsize=8.0, width=1,
+										widthcoords=ax[xindex,yindex].transAxes, transform=ax[xindex,yindex].transAxes))
+
+	plt.savefig(mule_game_data["name"]+'_rounds.png', dpi=200)
+#	plt.show()
 
 # Example usage:
 # python mule_basic_plot.py path/to/1234.mulegame
@@ -282,5 +328,5 @@ if __name__ == "__main__":
 	process_mule_game_data(mule_game_data)
 	plot_mule_game_data()
 	plot_mule_round_data()
-
+#	print(len(month_event))
 
