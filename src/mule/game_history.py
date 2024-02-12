@@ -177,16 +177,16 @@ class GameHistory:
 		return round_data["screens"]
 
 
-	def get_round_screen_events_data_by_id(self, screen_id: int, round_number: int = -1) -> list[dict[str]]:
+	def get_round_screen_events_data_by_id(self, screen_id: GameHistoryScreenId, round_number: int = -1) -> list[dict[str]]:
 		if round_number < 0:
 			round_number = self._round_number
 
 		for screen_data in self.get_round_screens_data(round_number):
-			screen_events_data = screen_data.get(str(screen_id))
+			screen_events_data = screen_data.get(str(screen_id.value))
 			if screen_events_data != None:
 				return screen_events_data
 		
-		return None
+		return []
 
 
 	def get_round_status_screen_events_data(self, round_number: int = -1) -> list[dict[str]]:
@@ -194,6 +194,13 @@ class GameHistory:
 			round_number = self._round_number
 
 		return self.get_round_screen_events_data_by_id(GameHistoryScreenId.GAME_HISTORY_SCREEN_ID_STATUS, round_number)
+
+
+	def get_round_development_screen_events_data(self, round_number: int = -1) -> list[dict[str]]:
+		if round_number < 0:
+			round_number = self._round_number
+
+		return self.get_round_screen_events_data_by_id(GameHistoryScreenId.GAME_HISTORY_SCREEN_ID_DEVELOPMENT, round_number)
 
 
 	def process_round_screen_events(self) -> None:
@@ -262,6 +269,31 @@ class GameHistory:
 	}
 
 
+	def get_round_event_data(self, round_number: int = -1) -> dict[str]:
+		if round_number < 0:
+			round_number = self._round_number
+
+		for development_screen_event in self.get_round_development_screen_events_data(round_number):
+			if development_screen_event["id"] == GameHistoryEventId.GAME_HISTORY_EVENT_ID_ROUND_EVENT.value:
+				return development_screen_event
+
+		return None
+
+
+	def get_turn_event_data(self, player_index: int, round_number: int = -1) -> dict[str]:
+		if round_number < 0:
+			round_number = self._round_number
+
+		for development_screen_event in self.get_round_development_screen_events_data(round_number):
+			if development_screen_event["id"] == GameHistoryEventId.GAME_HISTORY_EVENT_ID_TURN_EVENT.value:
+				parameters: list[int] = development_screen_event["parameters"]
+				event_player_index = parameters[len(parameters) - 1]
+				if event_player_index == player_index:
+					return development_screen_event
+
+		return None
+
+
 	def get_setting_play_level(self) -> int:
 		return self._settings_data["playLevel"]
 
@@ -307,3 +339,13 @@ class GameHistory:
 			player_data_good_amounts: list[int] = player_data["goodAmounts"]
 			for good_type in range(mule.NUMBER_OF_GOOD_TYPES):
 				self.game_state.set_planeteer_good_amount(player_index, good_type, player_data_good_amounts[good_type])
+			
+			planeteer_owned_plot_types: dict[str, int] = player_data["ownedPlotTypes"]
+
+			for plot_index_string in planeteer_owned_plot_types.keys():
+				plot_index = int(plot_index_string)
+				
+				self.game_state.set_plot_owner(plot_index, player_index)
+
+				plot_type = (mule.PlotType)(planeteer_owned_plot_types[plot_index_string])
+				self.game_state.set_plot_type(plot_index, plot_type)

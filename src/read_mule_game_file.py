@@ -1,4 +1,5 @@
 import sys
+import copy
 
 import mule
 
@@ -23,35 +24,59 @@ def process_mule_game_history(mule_game_history: mule.GameHistory) -> None:
 	# Game round status summaries
 	print("Rounds:")
 
+	mule_game_history.set_round_number(mule_game_history.get_number_of_rounds() - 1)
+	mule_game_history.process_round_screen_events()
+	last_round_game_state = copy.deepcopy(mule_game_history.game_state)
+
+	print("Last Round Plot Ownership Map:")
+	last_round_game_state.print_plot_owner_map()
+
+	print("Last Round Plot Type Map:")
+	last_round_game_state.print_plot_type_map()
+
 	for round_number in range(mule_game_history.get_number_of_rounds()):
 		mule_game_history.set_round_number(round_number)
 		mule_game_history.process_round_screen_events()
 
 		print("Round %d:" % (round_number))
 
+		round_event_data = mule_game_history.get_round_event_data()
+		if round_event_data != None:
+			print(" - Round Event: %s" % (round_event_data))
+
 		for player_index in range(mule.MAX_NUMBER_OF_PLAYERS):
-			print("   - Player #%d:" % (player_index))
+			print(" - Player #%d:" % (player_index))
 
-			print("     - Score")
-			print("       - Money: %d" % (mule_game_history.game_state.get_planeteer_score_money(player_index)))
-			print("       - Land:  %d" % (mule_game_history.game_state.get_planeteer_score_land(player_index)))
-			print("       - Goods: %d" % (mule_game_history.game_state.get_planeteer_score_goods(player_index)))
+			turn_event_data = mule_game_history.get_turn_event_data(player_index)
+			if turn_event_data != None:
+				print("     - Turn Event: %s" % (turn_event_data))
 
-			print("     - Rank: %d" % (mule_game_history.game_state.get_planeteer_rank(player_index)))
+			print("   - Score")
+			print("     - Money: %d" % (mule_game_history.game_state.get_planeteer_score_money(player_index)))
+			print("     - Land:  %d" % (mule_game_history.game_state.get_planeteer_score_land(player_index)))
+			print("     - Goods: %d" % (mule_game_history.game_state.get_planeteer_score_goods(player_index)))
 
-		print("   - Colony Score: %d" % (mule_game_history.game_state.get_colony_score()))
-		print("   - Colony Score Rating: %d" % (mule_game_history.game_state.get_colony_score_rating()))
+			print("   - Rank: %d" % (mule_game_history.game_state.get_planeteer_rank(player_index)))
+
+		print(" - Colony Score: %d" % (mule_game_history.game_state.get_colony_score()))
+		print(" - Colony Score Rating: %d" % (mule_game_history.game_state.get_colony_score_rating()))
 
 	# Final player data
 	for player_index in range(mule.MAX_NUMBER_OF_PLAYERS):
-		print("   - Player #%d:" % (player_index))
+		print(" - Player #%d:" % (player_index))
 
-		print("     - Money: %d" % (mule_game_history.game_state.get_planeteer_money_amount(player_index)))
+		print("   - Money: %d" % (mule_game_history.game_state.get_planeteer_money_amount(player_index)))
 		
-		print("     - Goods:")
+		print("   - Goods:")
 		for good_type in range(mule.NUMBER_OF_GOOD_TYPES):
 			good_amount = mule_game_history.game_state.get_planeteer_good_amount(player_index, good_type)
-			print("       - %d: %d" % (good_type, good_amount))
+			print("     - %d: %d" % (good_type, good_amount))
+	
+	print("Plot Ownership Map:")
+	mule_game_history.game_state.print_plot_owner_map()
+
+	print("Plot Type Map:")
+	mule_game_history.game_state.print_plot_type_map()
 
 
 # Example usage:
