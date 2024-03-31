@@ -5,5 +5,5 @@ __all__ = [
 ]
 
 from .mule import *
-from .game_history import GameHistory
-from .game_state import GameState
+from .game_history import *
+from .game_state import *

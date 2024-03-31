@@ -2,6 +2,9 @@ import mule
 
 class GameState:
 	def __init__(self):
+		self.plot_owner = [mule.PLOT_UNOWNED for _ in range(mule.PLANET_NUMBER_OF_PLOTS)]
+		self.plot_type = [mule.PlotType.PLOT_TYPE_UNUSED for _ in range(mule.PLANET_NUMBER_OF_PLOTS)]
+
 		self.planeteers_money_amount = [0 for _ in range(mule.MAX_NUMBER_OF_PLAYERS)]
 		self.planeteers_good_amount = [[0 for _ in range(mule.MAX_NUMBER_OF_PLAYERS)] for _ in range(mule.NUMBER_OF_GOOD_TYPES)]
 		
@@ -16,6 +19,22 @@ class GameState:
 
 	def reset(self) -> None:
 		self.__init__()
+
+
+	def get_plot_owner(self, plot_index: int) -> int:
+		return self.plot_owner[plot_index]
+
+
+	def set_plot_owner(self, plot_index: int, player_index: int) -> None:
+		self.plot_owner[plot_index] = player_index
+	
+	
+	def get_plot_type(self, plot_index: int) -> mule.PlotType:
+		return self.plot_type[plot_index]
+
+
+	def set_plot_type(self, plot_index: int, plot_type: mule.PlotType) -> None:
+		self.plot_type[plot_index] = plot_type
 
 
 	def get_planeteer_money_amount(self, player_index: int) -> int:
@@ -74,3 +93,37 @@ class GameState:
 
 	def set_colony_score_rating(self, _colony_score_rating: int) -> None:
 		self.colony_score_rating = _colony_score_rating
+
+
+	def print_plot_owner_map(self) -> None:
+		plot_index: int = 0
+
+		for plot_y in range(mule.PLANET_PLOT_HEIGHT):
+			row_string = ""
+
+			for plot_x in range(mule.PLANET_PLOT_WIDTH):
+				player_index = self.get_plot_owner(plot_index)
+				plot_owner_character = "." if player_index == mule.PLOT_UNOWNED else str(player_index)
+
+				row_string += plot_owner_character
+
+				plot_index += 1
+			
+			print(row_string)
+
+
+	def print_plot_type_map(self) -> None:
+		plot_index: int = 0
+
+		for plot_y in range(mule.PLANET_PLOT_HEIGHT):
+			row_string = ""
+
+			for plot_x in range(mule.PLANET_PLOT_WIDTH):
+				player_type = self.get_plot_type(plot_index)
+				plot_type_character = str(player_type.value)
+
+				row_string += plot_type_character
+
+				plot_index += 1
+			
+			print(row_string)
