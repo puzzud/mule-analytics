@@ -33,33 +33,30 @@ month_events = ['Pest attack', 'Pirate ship', 'Acid rain storm', 'Planetquake', 
 
 turn_events = []
 txt = []
-xlabels = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', 'END']
 
 turn_events_list = ['YOU JUST RECEIVED A PACKAGE FROM YOUR HOME-WORLD RELATIVES CONTAINING 3 FOOD AND 2 ENERGY UNITS.',
 			   'A WANDERING SPACE TRAVELER REPAID YOUR HOSPITALITY BY LEAVING TWO BARS OF SMITHORE.',
 			   'MISCHIEVOUS GLAC-ELVES BROKE INTO YOUR STORAGE SHED AND STOLE HALF YOUR FOOD.',
-			   'YOUR MULE WAS JUDGED "BEST BUILT" AT THE COLONY FAIR. YOU WON ${0}.',
-			   'ONE OF YOUR MULES LOST A BOLT. REPAIRS COST YOU ${0}.',
+			   'YOUR MULE WAS JUDGED "BEST BUILT" AT THE COLONY FAIR. YOU WON \\${0}.',
+			   'ONE OF YOUR MULES LOST A BOLT. REPAIRS COST YOU \\${0}.',
 			   'YOUR MULE WON THE COLONY TAP-DANCING CONTEST. YOU COLLECTED ${0}.',
 			   'YOUR MINING MULES HAVE DETERIORATED FROM HEAVY USE AND COST \\${0} EACH TO REPAIR. THE TOTAL COST IS \\${1}.',
 			   'THE SOLAR COLLECTORS ON YOUR ENERGY MULES ARE DIRTY. CLEANING COST YOU \\${0} EACH FOR A TOTAL OF \\${1}.',
 			   'THE COLONY COUNCIL FOR AGRICULTURE AWARDED YOU \\${0} FOR EACH FOOD PLOT YOU HAVE DEVELOPED. THE TOTAL GRANT IS \\${1}.',
-			   'THE COLONY AWARDED YOU ${0} FOR STOPPING THE WART WORM INFESTATION.',
-			   'THE MUSEUM BOUGHT YOUR ANTIQUE PERSONAL COMPUTER FOR ${0}.',
-			   'YOU WON THE COLONY SWAMP EEL EATING CONTEST AND COLLECTED ${0}. (YUCK!).',
-			   'A CHARITY FROM YOUR HOME-WORLD TOOK PITY ON YOU AND SENT ${0}.',
-			   'YOUR OFFWORLD INVESTMENTS IN ARTIFICIAL DUMBNESS PAID ${0} IN DIVIDENDS.',
-			   'A DISTANT RELATIVE DIED AND LEFT YOU A VAST FORTUNE. BUT AFTER TAXES YOU ONLY GOT ${0}.',
-			   'YOU FOUND A DEAD MOOSE RAT AND SOLD THE HIDE FOR ${0}.',
-			   'YOUR SPACE GYPSY INLAWS MADE A MESS OF THE TOWN. IT COST YOU ${0} TO CLEAN IT UP,',
-			   'FLYING CAT-BUGS ATE THE ROOF OFF YOUR HOUSE. REPAIRS COST ${0}.',
-			   'YOU LOST #1 BETTING ON THE TWO-LEGGED KAZINGA RACES.',
-			   'YOUR CHILD WAS BITTEN BY A BAT LIZARD AND THE HOSPITAL BILL COST YOU ${0}.',
+			   'THE COLONY AWARDED YOU \\${0} FOR STOPPING THE WART WORM INFESTATION.',
+			   'THE MUSEUM BOUGHT YOUR ANTIQUE PERSONAL COMPUTER FOR \\${0}.',
+			   'YOU WON THE COLONY SWAMP EEL EATING CONTEST AND COLLECTED \\${0}. (YUCK!).',
+			   'A CHARITY FROM YOUR HOME-WORLD TOOK PITY ON YOU AND SENT \\${0}.',
+			   'YOUR OFFWORLD INVESTMENTS IN ARTIFICIAL DUMBNESS PAID \\${0} IN DIVIDENDS.',
+			   'A DISTANT RELATIVE DIED AND LEFT YOU A VAST FORTUNE. BUT AFTER TAXES YOU ONLY GOT \\${0}.',
+			   'YOU FOUND A DEAD MOOSE RAT AND SOLD THE HIDE FOR \\${0}.',
+			   'YOUR SPACE GYPSY INLAWS MADE A MESS OF THE TOWN. IT COST YOU \\${0} TO CLEAN IT UP,',
+			   'FLYING CAT-BUGS ATE THE ROOF OFF YOUR HOUSE. REPAIRS COST \\${0}.',
+			   'YOU LOST \\${0} BETTING ON THE TWO-LEGGED KAZINGA RACES.',
+			   'YOUR CHILD WAS BITTEN BY A BAT LIZARD AND THE HOSPITAL BILL COST YOU \\${0}.',
 			   'YOU LOST A PLOT OF LAND BECAUSE THE CLAIM WAS NOT RECORDED.',
 			   'YOU RECEIVED AN EXTRA PLOT OF LAND TO ENCOURAGE COLONY DEVELOPMENT.']
 
-# initial values on month 0
-# month_event = ['Landing on the planet Irata']
 month_event = []
 event_label_colors = []
 
@@ -192,36 +189,29 @@ def process_mule_game_data(mule_game_data: dict):
 				month_event_parameters: list[int] = month_event_data["parameters"]
 
 				if month_event_id == 215:
+					event_name_param = turn_events_list[month_event_parameters[0]]
+
 					# here need to decide number of parameters so we can figure out which format to use
 					if len(month_event_parameters) == 2:
 						name_param = player_name[month_event_parameters[1]]
-						event_name_param = turn_events_list[month_event_parameters[0]]
-						turn_event1 = name_param + ': In month ' + str(round_number) + ', ' + event_name_param
 						turn_event = str(round_number) + ' - ' + event_name_param
 						turn_events.append(month_event_parameters[1])
-						turn_events.append(round_number)
-						turn_events.append(turn_event)
 
 					elif len(month_event_parameters) == 3:
 						name_param = player_name[month_event_parameters[2]]
-						event_name_param = turn_events_list[month_event_parameters[0]]
 						money1 = str(month_event_parameters[1])
-						turn_event1 = name_param + ': In month ' + str(round_number) + ', ' + event_name_param.format(money1)
 						turn_event = str(round_number) + ' - ' + event_name_param.format(money1)
 						turn_events.append(month_event_parameters[2])
-						turn_events.append(round_number)
-						turn_events.append(turn_event)
 
 					elif len(month_event_parameters) == 4:
 						name_param = player_name[month_event_parameters[3]]
-						event_name_param = turn_events_list[month_event_parameters[0]]
 						money1 = str(month_event_parameters[1])
 						money2 = str(month_event_parameters[2])
-						turn_event1 = name_param + ': In month ' + str(round_number) + ', ' + event_name_param.format(money1, money2)
 						turn_event = str(round_number) + ' - ' + event_name_param.format(money1, money2)
 						turn_events.append(month_event_parameters[3])
-						turn_events.append(round_number)
-						turn_events.append(turn_event)
+
+					turn_events.append(round_number)
+					turn_events.append(turn_event)
 
 				elif month_event_id == 290:
 					month_event.append(month_events[month_event_parameters[0]])
@@ -271,6 +261,10 @@ def plot_mule_game_data():
 def plot_mule_round_data():
 	# Plot individual round data for each player
 
+	# generate x-axis labels that correspond to each status screen; "Status #0" is beginning state
+	xlabels = [i for i in range(0, 13)]
+
+	# create a 2x2 grid of plots, one for each player
 	fig, ax = plt.subplots(2,2, sharey=True, figsize=(10, 11))
 	plt.rcParams['text.usetex'] = False
 	plt.subplots_adjust(left=0.125, right=0.9, bottom=0.2, top=0.95, hspace=0.8)
@@ -293,18 +287,19 @@ def plot_mule_round_data():
 		for i in range(0, len(turn_events), 3):
 			if turn_events[i] == player_graph:
 
-			# create a gray bar indicating the development phase between "status" screens
-			# (which is when these events occur)
+				# create a gray bar indicating the development phase between "status" screens
+				# (which is when these events occur)
 				ax[xindex, yindex].axvspan(xmin=turn_events[i+1]-1, xmax=turn_events[i+1], color='gray', ls=':', alpha=0.2)
 
-
+				# take all individual per-player events and turn them into a string with newlines between events
 				txt1.append(turn_events[i+2])
 				txt = '\n'.join(txt1)
-#		print(txt)
 
+		# use the custom wrapping function defined above to wrap the text block string to the width of the plot for each player
 		ax[xindex,yindex].add_artist(WrapText(0, -0.68, txt, stretch=200, color=player_color[player_graph], fontsize=8.0, width=1,
 										widthcoords=ax[xindex,yindex].transAxes, transform=ax[xindex,yindex].transAxes))
 
+	# figure needs to be saved out at 200 dpi to preserve proper wrapping as defined above.
 	plt.savefig(mule_game_data["name"]+'_rounds.png', dpi=200)
 #	plt.show()
 
@@ -328,5 +323,4 @@ if __name__ == "__main__":
 	process_mule_game_data(mule_game_data)
 	plot_mule_game_data()
 	plot_mule_round_data()
-#	print(len(month_event))
 
