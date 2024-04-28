@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import matplotlib.text as mtext
 import numpy as np
 
-
 # array for storing total values by month
 scores = [[0 for i in range(13)] for j in range(4)]
 
@@ -237,10 +236,9 @@ def process_mule_game_data(mule_game_data: dict):
 def plot_mule_game_data():
 	# Create plot using matplotlib package
 
+	months = np.arange(13)
 	month_event.append('The ship has returned!')
 	event_label_colors.append('gray')
-	month_event.append('Final status')
-	event_label_colors.append('orange')
 
 	fig, ax = plt.subplots(figsize=(10, 8))
 	plt.subplots_adjust(bottom=0.3)
@@ -249,20 +247,32 @@ def plot_mule_game_data():
 
 	ax.legend(player_name)
 	ax.set_ylabel("Total Wealth")
-	ax.tick_params(axis='x', labelrotation = 80)
-	ax.set_xticks(np.arange(0, 13, 1), month_event)
-	for i in range(13):
-		ax.get_xticklabels()[i].set_color(event_label_colors[i])
+	ax.set_xticks(months)
+	minor_ticks = months[:-1] + 0.5 # Positions between major ticks
+	ax.set_xticks(minor_ticks, minor=True)
+	ax.set_xticklabels(month_event, minor=True, rotation=60)
+	ax.tick_params(axis='x', which='major', length=5)  # Major ticks length
+	ax.tick_params(axis='x', which='minor', length=15)  # Minor ticks are longer
+
+	# Adjust label alignment and color
+	minor_labels = ax.xaxis.get_minorticklabels()
+	for i, label in enumerate(minor_labels):
+		label.set_color(event_label_colors[i])
+		label.set_horizontalalignment('right')  # Shift labels left to align with the ticks
+
+	# Draw light gray vertical lines at minor tick positions to indicate month events
+	for mtick in minor_ticks:
+		ax.axvline(x=mtick, color='gainsboro', linewidth=2, alpha=0.35)
+
+	ax.spines.right.set_visible(False)
+	ax.spines.top.set_visible(False)
 
 	ax.set_title(mule_game_data["name"])
 	plt.savefig(mule_game_data["name"]+'_summary.png', dpi=200)
-#	plt.show()
 
 def plot_mule_round_data():
 	# Plot individual round data for each player
-
-	# generate x-axis labels that correspond to each status screen; "Status #0" is beginning state
-	xlabels = [i for i in range(0, 13)]
+	months = np.arange(13)  # 0 to 12 months
 
 	# create a 2x2 grid of plots, one for each player
 	fig, ax = plt.subplots(2,2, sharey=True, figsize=(10, 11))
@@ -278,9 +288,25 @@ def plot_mule_round_data():
 		ax[xindex, yindex].plot(money[player_graph], player_color[player_graph], alpha=0.6, label='money')
 		ax[xindex, yindex].plot(land[player_graph], player_color[player_graph], alpha=0.3, label='land')
 		ax[xindex, yindex].plot(goods[player_graph], player_color[player_graph], alpha=0.8, label='goods', ls='--')
-		ax[xindex, yindex].set_xticks(np.arange(0, 13, 1), xlabels)
 		ax[xindex, yindex].legend(loc='upper left')
 		ax[xindex, yindex].set_title(player_name[player_graph]+" ("+player_color[player_graph]+" "+player_species[player_graph]+")", color=player_color[player_graph])
+
+		# Setting major ticks for each month and making labels empty
+		ax[xindex, yindex].set_xticks(months)
+		ax[xindex, yindex].set_xticklabels([''] * len(months))  # Empty labels for major ticks
+
+		# Setting up minor ticks to be invisible and labeling them
+		minor_ticks = months[:-1] + 0.5  # Positions between the major ticks
+		ax[xindex, yindex].set_xticks(minor_ticks, minor=True)
+		ax[xindex, yindex].set_xticklabels([f"{int(m+1)}" for m in months[:-1]], minor=True)  # Month numbers as labels
+
+		# Customizing the appearance of ticks
+		ax[xindex, yindex].tick_params(axis='x', which='major', length=10)  # Major ticks
+		ax[xindex, yindex].tick_params(axis='x', which='minor', length=0)  # Minor ticks are invisible
+
+		# Ensuring the minor tick labels are visible and adjusting settings
+		for label in ax[xindex, yindex].xaxis.get_minorticklabels():
+			label.set_visible(True)  # Make sure labels are visible
 
 		txt1 = []
 
@@ -301,15 +327,14 @@ def plot_mule_round_data():
 
 	# figure needs to be saved out at 200 dpi to preserve proper wrapping as defined above.
 	plt.savefig(mule_game_data["name"]+'_rounds.png', dpi=200)
-#	plt.show()
 
 # Example usage:
-# python mule_basic_plot.py path/to/1234.mulegame
+# python mule_game_plot.py path/to/1234.mulegame
 
 if __name__ == "__main__":
 	# Check if a command-line argument is provided
 	if len(sys.argv) != 2:
-		print("Usage: python read_mule_game_file.py <mule_game_file_path>")
+		print("Usage: python mule_game_plot.py <mule_game_file_path>")
 		sys.exit(1)
 
 	input_file_path = sys.argv[1]
