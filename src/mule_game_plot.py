@@ -240,30 +240,37 @@ def plot_mule_game_data():
 	month_event.append('The ship has returned!')
 	event_label_colors.append('gray')
 
+	# Set up graph display dimensions
 	fig, ax = plt.subplots(figsize=(10, 8))
 	plt.subplots_adjust(bottom=0.3)
-	for player_graph in range(4):
-		ax.plot(scores[player_graph], player_color[player_graph], marker='.', label=player_name[player_graph])
 
 	ax.legend(player_name)
 	ax.set_ylabel("Total Wealth")
+
+	# Graph total player scores with different colors and markers
+	markerstyles=['o', 's', '^', 'D']
+	for player_graph in range(4):
+		ax.plot(scores[player_graph], player_color[player_graph], marker=markerstyles[player_graph], markersize=4, label=player_name[player_graph])
+
+	# Set up tick formats and labels
 	ax.set_xticks(months)
 	minor_ticks = months[:-1] + 0.5 # Positions between major ticks
 	ax.set_xticks(minor_ticks, minor=True)
-	ax.set_xticklabels(month_event, minor=True, rotation=60)
+	ax.set_xticklabels(month_event, minor=True, rotation=60) # Rotate events slightly for better legibility
 	ax.tick_params(axis='x', which='major', length=5)  # Major ticks length
 	ax.tick_params(axis='x', which='minor', length=15)  # Minor ticks are longer
 
 	# Adjust label alignment and color
 	minor_labels = ax.xaxis.get_minorticklabels()
 	for i, label in enumerate(minor_labels):
-		label.set_color(event_label_colors[i])
+		label.set_color(event_label_colors[i]) # Color-code per player
 		label.set_horizontalalignment('right')  # Shift labels left to align with the ticks
 
 	# Draw light gray vertical lines at minor tick positions to indicate month events
 	for mtick in minor_ticks:
 		ax.axvline(x=mtick, color='gainsboro', linewidth=2, alpha=0.35)
 
+	# Clean up graph by making top and right boundaries invisible
 	ax.spines.right.set_visible(False)
 	ax.spines.top.set_visible(False)
 
@@ -280,31 +287,37 @@ def plot_mule_round_data():
 	plt.subplots_adjust(left=0.125, right=0.9, bottom=0.2, top=0.95, hspace=0.8)
 
 	for player_graph in range(4):
+
+		# xindex and yindex indicate which of the 4 individual player graphs we are currently working with
 		xindex = int(player_graph/2)
 		yindex = player_graph-xindex
 		if yindex == 2:
 			yindex = 0
+
+		# Set up different linestyles and alphas for total, money, land, and goods
 		ax[xindex, yindex].plot(scores[player_graph], player_color[player_graph], alpha=0.4, marker='|', label='total')
 		ax[xindex, yindex].plot(money[player_graph], player_color[player_graph], alpha=0.6, label='money')
 		ax[xindex, yindex].plot(land[player_graph], player_color[player_graph], alpha=0.3, label='land')
 		ax[xindex, yindex].plot(goods[player_graph], player_color[player_graph], alpha=0.8, label='goods', ls='--')
+
+		# Figure legend
 		ax[xindex, yindex].legend(loc='upper left')
 		ax[xindex, yindex].set_title(player_name[player_graph]+" ("+player_color[player_graph]+" "+player_species[player_graph]+")", color=player_color[player_graph])
 
-		# Setting major ticks for each month and making labels empty
+		# Set major ticks for each month and make labels empty
 		ax[xindex, yindex].set_xticks(months)
 		ax[xindex, yindex].set_xticklabels([''] * len(months))  # Empty labels for major ticks
 
-		# Setting up minor ticks to be invisible and labeling them
+		# Set up minor ticks to be invisible and label them
 		minor_ticks = months[:-1] + 0.5  # Positions between the major ticks
 		ax[xindex, yindex].set_xticks(minor_ticks, minor=True)
 		ax[xindex, yindex].set_xticklabels([f"{int(m+1)}" for m in months[:-1]], minor=True)  # Month numbers as labels
 
-		# Customizing the appearance of ticks
+		# Customize the appearance of ticks
 		ax[xindex, yindex].tick_params(axis='x', which='major', length=10)  # Major ticks
 		ax[xindex, yindex].tick_params(axis='x', which='minor', length=0)  # Minor ticks are invisible
 
-		# Ensuring the minor tick labels are visible and adjusting settings
+		# Ensure the minor tick labels are visible and adjust settings
 		for label in ax[xindex, yindex].xaxis.get_minorticklabels():
 			label.set_visible(True)  # Make sure labels are visible
 
@@ -321,7 +334,8 @@ def plot_mule_round_data():
 				txt1.append(turn_events[i+2])
 				txt = '\n'.join(txt1)
 
-		# use the custom wrapping function defined above to wrap the text block string to the width of the plot for each player
+		# Use the custom wrapping function defined above to wrap the text block string to the width of the graph for each player
+		# Wrap function doesn't properly position text immediately under corresponding graph...
 		ax[xindex,yindex].add_artist(WrapText(0, -0.68, txt, stretch=200, color=player_color[player_graph], fontsize=8.0, width=1,
 										widthcoords=ax[xindex,yindex].transAxes, transform=ax[xindex,yindex].transAxes))
 
