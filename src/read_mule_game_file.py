@@ -40,9 +40,23 @@ def process_mule_game_history(mule_game_history: mule.GameHistory) -> None:
 
 		print("Round %d:" % (round_number))
 
+		mule_price = mule_game_history.game_state.get_store_mule_price()
+		print(" - Mule Price: %d" % (mule_price))
+
 		round_event_data = mule_game_history.get_round_event_data()
 		if round_event_data != None:
 			print(" - Round Event: %s" % (round_event_data))
+
+		print(" - Good Values:")
+		for good_type in range(mule.NUMBER_OF_GOOD_TYPES):
+			good_value = mule_game_history.game_state.get_good_value(good_type)
+			print("   - %d: %d" % (good_type, good_value))
+		
+		if round_number > 0:
+			print(" - Store Good Buy Prices:")
+			for good_type in range(mule.NUMBER_OF_GOOD_TYPES):
+				good_value = mule_game_history.game_state.get_store_good_price_buy(good_type)
+				print("   - %d: %d" % (good_type, good_value))
 
 		for player_index in range(mule.MAX_NUMBER_OF_PLAYERS):
 			print(" - Player #%d:" % (player_index))

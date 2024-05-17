@@ -6,14 +6,9 @@ import mule
 from .game_state import GameState
 
 
-# TODO: Referring to these screen IDs as
-# "history" as they are not consistent with
-# how screens are ID'd in MULE Online
-# (technically a bug). So it will need to
-# make this abstraction or kill compatibility
-# with any client using this constants.
 class GameHistoryScreenId(Enum):
-	GAME_HISTORY_SCREEN_ID_STATUS:      int = 0
+	GAME_HISTORY_SCREEN_ID_INTRO:       int = 0
+	GAME_HISTORY_SCREEN_ID_STATUS:      int = 1
 	GAME_HISTORY_SCREEN_ID_DEVELOPMENT: int = 2
 	GAME_HISTORY_SCREEN_ID_AUCTION:     int = 3
 
@@ -23,9 +18,9 @@ class GameHistoryEventId(Enum):
 #	GAME_HISTORY_EVENT_ID_INIT_TOWN_GOODS_AMOUNT:      int = 30
 #	GAME_HISTORY_EVENT_ID_INIT_PLANETEER_GOODS_AMOUNT: int = 40
 #	GAME_HISTORY_EVENT_ID_INIT_PLANETEER_MONEY_AMOUNT: int = 41
-#	GAME_HISTORY_EVENT_ID_ROUND_GOODS_VALUATION:       int = 50
+	GAME_HISTORY_EVENT_ID_ROUND_GOODS_VALUATION:       int = 50
 #	GAME_HISTORY_EVENT_ID_ROUND_MULE_PRODUCTION:       int = 75
-#	GAME_HISTORY_EVENT_ID_ROUND_MULE_VALUATION:        int = 76
+	GAME_HISTORY_EVENT_ID_ROUND_MULE_VALUATION:        int = 76
 	GAME_HISTORY_EVENT_ID_ROUND_SCORE:                 int = 150
 #	GAME_HISTORY_EVENT_ID_LAND_GRANT:                  int = 200
 #	GAME_HISTORY_EVENT_ID_LAND_AUCTION:                int = 201
@@ -41,7 +36,7 @@ class GameHistoryEventId(Enum):
 #	GAME_HISTORY_EVENT_ID_TURN_WAMPUS_CAUGHT:          int = 270
 #	GAME_HISTORY_EVENT_ID_ROUND_PRODUCTION:            int = 280
 	GAME_HISTORY_EVENT_ID_ROUND_EVENT:                 int = 290
-#	GAME_HISTORY_EVENT_ID_AUCTION_STORE_PRICES:        int = 300
+	GAME_HISTORY_EVENT_ID_AUCTION_STORE_PRICES:        int = 300
 #	GAME_HISTORY_EVENT_ID_AUCTION_STATUS_PREVIOUS:     int = 310
 #	GAME_HISTORY_EVENT_ID_AUCTION_STATUS_USAGE:        int = 311
 #	GAME_HISTORY_EVENT_ID_AUCTION_STATUS_SPOILAGE:     int = 312
@@ -54,6 +49,8 @@ class GameHistoryEventId(Enum):
 
 class GameHistory:
 	def __init__(self, input = None):
+		self.screen_id_value_api_translation_table: dict[GameHistoryScreenId, int] = {}
+
 		self.client_version = ""
 		self.game_name = ""
 
@@ -97,6 +94,7 @@ class GameHistory:
 	def process_json_data(self, json_data: dict):
 		# TODO: Process any API versioning after reading client version.
 		self.client_version = json_data["version"]["client"]
+		self.process_api_versioning()
 
 		self.game_name = json_data["name"]
 
@@ -110,6 +108,18 @@ class GameHistory:
 
 		self.reset_game_state()
 		self.set_round_number(0)
+
+
+	def process_api_versioning(self):
+		self.screen_id_value_api_translation_table[GameHistoryScreenId.GAME_HISTORY_SCREEN_ID_INTRO] = GameHistoryScreenId.GAME_HISTORY_SCREEN_ID_INTRO.value
+		self.screen_id_value_api_translation_table[GameHistoryScreenId.GAME_HISTORY_SCREEN_ID_STATUS] = GameHistoryScreenId.GAME_HISTORY_SCREEN_ID_STATUS.value
+		self.screen_id_value_api_translation_table[GameHistoryScreenId.GAME_HISTORY_SCREEN_ID_DEVELOPMENT] = GameHistoryScreenId.GAME_HISTORY_SCREEN_ID_DEVELOPMENT.value
+		self.screen_id_value_api_translation_table[GameHistoryScreenId.GAME_HISTORY_SCREEN_ID_AUCTION] = GameHistoryScreenId.GAME_HISTORY_SCREEN_ID_AUCTION.value
+
+		if compare_versions(self.client_version, "1.11.0") < 0:
+			# For earlier versions the screen ID for the Status screen was not consistent with
+			# how screens are ID'd in MULE Online (technically a bug).
+			self.screen_id_value_api_translation_table[GameHistoryScreenId.GAME_HISTORY_SCREEN_ID_STATUS] = 0
 
 
 	def is_populated(self) -> bool:
@@ -181,8 +191,14 @@ class GameHistory:
 		if round_number < 0:
 			round_number = self._round_number
 
+		# NOTE: This is the only API that takes a screen ID as a parameter,
+		# so it should be filtered based on API version differences. In the future,
+		# it's a good idea to always do this when receiving a game history screen ID when
+		# resolving its integer "value", but probably not necessary.
+		screen_id_value: int = self.screen_id_value_api_translation_table[screen_id]
+
 		for screen_data in self.get_round_screens_data(round_number):
-			screen_events_data = screen_data.get(str(screen_id.value))
+			screen_events_data = screen_data.get(str(screen_id_value))
 			if screen_events_data != None:
 				return screen_events_data
 		
@@ -240,6 +256,15 @@ class GameHistory:
 		method(self, screen_event_parameters)
 
 
+	def process_screen_event_goods_valuation(self, screen_event_parameters: list[int]) -> None:
+		for good_type in range(len(screen_event_parameters)):
+			self.game_state.set_good_value(good_type, screen_event_parameters[good_type])
+
+
+	def process_screen_event_mule_valuation(self, screen_event_parameters: list[int]) -> None:
+		self.game_state.set_store_mule_price(screen_event_parameters[0])
+
+
 	def process_screen_event_status_score(self, screen_event_parameters: list[int]) -> None:
 		colony_score: int = 0
 		planeteers_rank = [0 for _ in range(mule.MAX_NUMBER_OF_PLAYERS)]
@@ -264,8 +289,16 @@ class GameHistory:
 		self.game_state.set_colony_score_rating(screen_event_parameters[12])
 
 
+	def process_screen_event_auction_store_prices(self, screen_event_parameters: list[int]) -> None:
+		good_type: int = screen_event_parameters[0]
+		self.game_state.set_store_good_price_buy(good_type, screen_event_parameters[1])
+
+
 	process_screen_event_methods: dict[int, Callable] = {
+		GameHistoryEventId.GAME_HISTORY_EVENT_ID_ROUND_GOODS_VALUATION.value: process_screen_event_goods_valuation,
+		GameHistoryEventId.GAME_HISTORY_EVENT_ID_ROUND_MULE_VALUATION.value: process_screen_event_mule_valuation,
 		GameHistoryEventId.GAME_HISTORY_EVENT_ID_ROUND_SCORE.value: process_screen_event_status_score,
+		GameHistoryEventId.GAME_HISTORY_EVENT_ID_AUCTION_STORE_PRICES.value: process_screen_event_auction_store_prices,
 	}
 
 
@@ -299,7 +332,25 @@ class GameHistory:
 
 
 	def get_setting_number_of_human_players(self) -> int:
+		if compare_versions(self.client_version, "1.11.0") >= 0:
+			return self._v_1_11_get_setting_number_of_human_players()
+		else:
+			return self._v_x_get_setting_number_of_human_players()
+
+
+	def _v_x_get_setting_number_of_human_players(self) -> int:
+		# NOTE: numberOfHumanPlayers has been removed in v1.11.0.
 		return self._settings_data["numberOfHumanPlayers"]
+
+
+	def _v_1_11_get_setting_number_of_human_players(self) -> int:
+		number_of_human_players = 0
+		
+		for player_index in range(mule.MAX_NUMBER_OF_PLAYERS):
+			if self.get_player_input_type(player_index) != mule.PLAYER_INPUT_TYPE_COMPUTER:
+				number_of_human_players += 1
+		
+		return number_of_human_players
 
 
 	def _get_player_data(self, player_index: int) -> dict[str]:
@@ -349,3 +400,26 @@ class GameHistory:
 
 				plot_type = (mule.PlotType)(planeteer_owned_plot_types[plot_index_string])
 				self.game_state.set_plot_type(plot_index, plot_type)
+
+
+def compare_versions(version1: str, version2: str) -> int:
+	# Split the version strings by '.' and convert each part to an integer.
+	v1_parts = list(map(int, version1.split('.')))
+	v2_parts = list(map(int, version2.split('.')))
+
+	# Find the longest length between the two versions.
+	max_length = max(len(v1_parts), len(v2_parts))
+
+	# Pad the shorter version with zeros (for comparison purposes).
+	v1_parts.extend([0] * (max_length - len(v1_parts)))
+	v2_parts.extend([0] * (max_length - len(v2_parts)))
+
+	# Compare corresponding parts.
+	for part1, part2 in zip(v1_parts, v2_parts):
+		if part1 < part2:
+			return -1
+		elif part1 > part2:
+			return 1
+
+	# If all parts are equal.
+	return 0

@@ -5,6 +5,13 @@ class GameState:
 		self.plot_owner = [mule.PLOT_UNOWNED for _ in range(mule.PLANET_NUMBER_OF_PLOTS)]
 		self.plot_type = [mule.PlotType.PLOT_TYPE_UNUSED for _ in range(mule.PLANET_NUMBER_OF_PLOTS)]
 
+		self.good_values = [0 for _ in range(mule.NUMBER_OF_GOOD_TYPES)]
+
+		self.store_good_prices_buy = [0 for _ in range(mule.NUMBER_OF_GOOD_TYPES)]
+		self.store_mule_price = 0
+
+		self.planeteers_money_amount = [0 for _ in range(mule.MAX_NUMBER_OF_PLAYERS)]
+
 		self.planeteers_money_amount = [0 for _ in range(mule.MAX_NUMBER_OF_PLAYERS)]
 		self.planeteers_good_amount = [[0 for _ in range(mule.MAX_NUMBER_OF_PLAYERS)] for _ in range(mule.NUMBER_OF_GOOD_TYPES)]
 		
@@ -35,6 +42,30 @@ class GameState:
 
 	def set_plot_type(self, plot_index: int, plot_type: mule.PlotType) -> None:
 		self.plot_type[plot_index] = plot_type
+
+
+	def get_good_value(self, good_type: int) -> int:
+		return self.good_values[good_type]
+
+
+	def set_good_value(self, good_type: int, value: int) -> None:
+		self.good_values[good_type] = value
+
+
+	def get_store_good_price_buy(self, good_type: int) -> int:
+		return self.store_good_prices_buy[good_type]
+
+
+	def set_store_good_price_buy(self, good_type: int, price: int) -> None:
+		self.store_good_prices_buy[good_type] = price
+
+
+	def get_store_mule_price(self) -> int:
+		return self.store_mule_price
+
+
+	def set_store_mule_price(self, price: int) -> None:
+		self.store_mule_price = price
 
 
 	def get_planeteer_money_amount(self, player_index: int) -> int:
