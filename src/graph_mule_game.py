@@ -52,6 +52,7 @@ turn_events_list = ['YOU JUST RECEIVED A PACKAGE FROM YOUR HOME-WORLD RELATIVES 
 					'YOU LOST A PLOT OF LAND BECAUSE THE CLAIM WAS NOT RECORDED.',
 					'YOU RECEIVED AN EXTRA PLOT OF LAND TO ENCOURAGE COLONY DEVELOPMENT.']
 
+commodity_names = ['Food', 'Energy', 'Smithore', 'Crystite']
 month_event = []
 event_label_colors = []
 turn_events = []
@@ -103,7 +104,6 @@ def process_round_event(round_event, game_state):
 		else:  # just return the event with its default color
 			return event, 'black'
 
-
 def process_turn_event(turn_event):
 	if turn_event['id'] == mule.GameHistoryEventId.GAME_HISTORY_EVENT_ID_TURN_EVENT.value:
 
@@ -121,7 +121,6 @@ def process_turn_event(turn_event):
 			event = turn_events_list[turn_event['parameters'][0]].format(money1, money2)
 
 		return event
-
 
 def process_mule_game_history(mule_game_history: mule.GameHistory) -> None:
 	print("Client Version: %s" % mule_game_history.client_version)
@@ -154,6 +153,7 @@ def process_mule_game_history(mule_game_history: mule.GameHistory) -> None:
 	last_round_game_state = copy.deepcopy(mule_game_history.game_state)
 
 	for round_number in range(mule_game_history.get_number_of_rounds()):
+
 		mule_game_history.set_round_number(round_number)
 		mule_game_history.process_round_screen_events()
 
@@ -315,6 +315,43 @@ def plot_mule_round_data():
 	# Figure needs to be saved out at 200 dpi to preserve proper wrapping as defined above.
 	plt.savefig(mule_game_history.game_name + '_rounds.png', dpi=200)
 
+def plot_mule_commodity_data():
+	# Plot monthly commodity prices
+	months = np.arange(mule_game_history.get_number_of_rounds())
+
+	# create a 2x2 grid of plots, one for each commodity
+	fig, ax = plt.subplots(2, 2, sharey=True, figsize=(10, 8))
+	plt.rcParams['text.usetex'] = False
+	fig.suptitle(mule_game_history.game_name)
+	#plt.subplots_adjust(left=0.125, right=0.9, bottom=0.2, top=0.95, hspace=0.8)
+
+	for commodity in range(mule.NUMBER_OF_GOOD_TYPES):
+		# Iterate for each of the individual commodities
+		xindex = int(commodity / 2)
+		yindex = commodity - xindex
+		if yindex == 2:
+			yindex = 0
+
+		price = []
+
+		for round_number in range(mule_game_history.get_number_of_rounds()):
+			mule_game_history.set_round_number(round_number)
+			mule_game_history.process_round_screen_events()
+
+			price.append(mule_game_history.game_state.get_store_good_price_buy(commodity))
+
+		ax[xindex, yindex].bar(months, price)
+		ax[xindex, yindex].yaxis.set_tick_params(labelleft=True)
+
+		# Legend
+		ax[xindex, yindex].set_title(commodity_names[commodity])
+
+		ax[xindex, yindex].set_xticks(months)
+		ax[xindex, yindex].grid(axis='y', color='gray', linestyle='--', linewidth=0.5)
+
+	# Figure needs to be saved out at 200 dpi to preserve proper wrapping as defined above.
+	plt.savefig(mule_game_history.game_name + '_prices.png', dpi=200)
+
 # Example usage:
 # python read_mule_game_file.py path/to/1234.mulegame
 
@@ -335,3 +372,4 @@ if __name__ == "__main__":
 	process_mule_game_history(mule_game_history)
 	plot_mule_game_data()
 	plot_mule_round_data()
+	plot_mule_commodity_data()
