@@ -51,6 +51,7 @@ turn_events_list = ['YOU JUST RECEIVED A PACKAGE FROM YOUR HOME-WORLD RELATIVES 
 					'YOUR CHILD WAS BITTEN BY A BAT LIZARD AND THE HOSPITAL BILL COST YOU \\${0}.',
 					'YOU LOST A PLOT OF LAND BECAUSE THE CLAIM WAS NOT RECORDED.',
 					'YOU RECEIVED AN EXTRA PLOT OF LAND TO ENCOURAGE COLONY DEVELOPMENT.']
+turn_events_valence = [1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1]
 
 commodity_names = ['Food', 'Energy', 'Smithore', 'Crystite']
 month_event = []
@@ -120,7 +121,9 @@ def process_turn_event(turn_event):
 			money2 = str(turn_event['parameters'][2])
 			event = turn_events_list[turn_event['parameters'][0]].format(money1, money2)
 
-		return event
+		valence = turn_events_valence[turn_event['parameters'][0]]
+
+		return [event, valence]
 
 def process_mule_game_history(mule_game_history: mule.GameHistory) -> None:
 	print("Client Version: %s" % mule_game_history.client_version)
@@ -176,7 +179,9 @@ def process_mule_game_history(mule_game_history: mule.GameHistory) -> None:
 			if turn_event_data is not None:
 				turn_events.append(player_index)
 				turn_events.append(round_number)
-				turn_events.append(str(round_number) + ' - ' + process_turn_event(turn_event_data))
+				event_desc = process_turn_event(turn_event_data)
+				turn_events.append(str(round_number) + ' - ' + event_desc[0])
+				turn_events.append(event_desc[1])
 
 			score_money = mule_game_history.game_state.get_planeteer_score_money(player_index)
 			score_land = mule_game_history.game_state.get_planeteer_score_land(player_index)
@@ -281,12 +286,16 @@ def plot_mule_round_data():
 
 		txt1 = []
 
-		for i in range(0, len(turn_events), 3):
+		for i in range(0, len(turn_events), 4):
 			if turn_events[i] == player_graph:
 
 				# Create a gray bar indicating the development phase between "status" screens
 				# (which is when these events occur)
-				ax[xindex, yindex].axvspan(xmin=turn_events[i+1]-1, xmax=turn_events[i+1], color='gray', ls=':', alpha=0.2)
+				if turn_events[i+3]:
+					barcolor = 'limegreen'
+				else:
+					barcolor = 'crimson'
+				ax[xindex, yindex].axvspan(xmin=turn_events[i+1]-1, xmax=turn_events[i+1], color=barcolor, ls=':', alpha=0.2)
 
 				# Take all individual per-player events and turn them into a string with newlines between events
 				txt1.append(turn_events[i+2])
@@ -320,6 +329,7 @@ def plot_mule_commodity_data():
 	months = np.arange(mule_game_history.get_number_of_rounds())
 
 	# create a 2x2 grid of plots, one for each commodity
+	# NOTE: this will break if NUMBER_OF_GOOD_TYPES > 4 in future M.U.L.E. versions
 	fig, ax = plt.subplots(2, 2, sharey=True, figsize=(10, 8))
 	plt.rcParams['text.usetex'] = False
 	fig.suptitle(mule_game_history.game_name)
