@@ -1,7 +1,8 @@
 # graph_mule_game.py
-# imports a M.U.L.E. game file and makes two graphs:
+# imports a M.U.L.E. game file and makes three graphs:
 # 1) total wealth (money + land + goods) month by month plus monthly events color-coded by player
 # 2) per-player summary graphs (total, money, land and goods) and individual player turn events
+# 3) commodity prices over the course of the game
 
 import copy
 import sys
@@ -294,6 +295,8 @@ def plot_mule_round_data():
 
 				# Create a colored bar indicating the development phase between "status" screens
 				# (which is when these events occur)
+
+				# Value of 'valence' determines green (good news) or red (bad news) events
 				if turn_events[i+3]:
 					barcolor = 'limegreen'
 				else:
