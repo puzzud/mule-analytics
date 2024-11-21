@@ -51,6 +51,8 @@ turn_events_list = ['YOU JUST RECEIVED A PACKAGE FROM YOUR HOME-WORLD RELATIVES 
 					'YOUR CHILD WAS BITTEN BY A BAT LIZARD AND THE HOSPITAL BILL COST YOU \\${0}.',
 					'YOU LOST A PLOT OF LAND BECAUSE THE CLAIM WAS NOT RECORDED.',
 					'YOU RECEIVED AN EXTRA PLOT OF LAND TO ENCOURAGE COLONY DEVELOPMENT.']
+
+# 'valence' separates the events above into good events (1) and bad events (0)
 turn_events_valence = [1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1]
 
 commodity_names = ['Food', 'Energy', 'Smithore', 'Crystite']
@@ -179,6 +181,7 @@ def process_mule_game_history(mule_game_history: mule.GameHistory) -> None:
 			if turn_event_data is not None:
 				turn_events.append(player_index)
 				turn_events.append(round_number)
+				# fetch event description - a list consisting of text[0] and 'valence'[1] (good=1 vs. bad=0)
 				event_desc = process_turn_event(turn_event_data)
 				turn_events.append(str(round_number) + ' - ' + event_desc[0])
 				turn_events.append(event_desc[1])
@@ -289,7 +292,7 @@ def plot_mule_round_data():
 		for i in range(0, len(turn_events), 4):
 			if turn_events[i] == player_graph:
 
-				# Create a gray bar indicating the development phase between "status" screens
+				# Create a colored bar indicating the development phase between "status" screens
 				# (which is when these events occur)
 				if turn_events[i+3]:
 					barcolor = 'limegreen'
