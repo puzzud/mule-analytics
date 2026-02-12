@@ -8,6 +8,7 @@ import copy
 import sys
 import matplotlib.pyplot as plt
 import matplotlib.text as mtext
+from matplotlib.transforms import ScaledTranslation
 import numpy as np
 
 import mule
@@ -85,7 +86,8 @@ class WrapText(mtext.Text):
 		if not widthcoords:
 			self.width = width
 		else:
-			a = widthcoords.transform_point([(0, 0), (width, 0)])
+			# Use transform() for two points; transform_point() is for a single point.
+			a = widthcoords.transform([(0, 0), (width, 0)])
 			self.width = a[1][0] - a[0][0]
 
 	def _get_wrap_line_width(self):
@@ -308,24 +310,26 @@ def plot_mule_round_data():
 
 		if txt1:
 			txt = '\n'.join(txt1)
-
-			# Create a temporary WrapText object to calculate the height of the text
-			temp_text = WrapText(0, 0, txt, width=1, widthcoords=ax[xindex, yindex].transAxes,
-								 transform=ax[xindex, yindex].transAxes, fontsize=8.0)
-			ax[xindex, yindex].add_artist(temp_text)  # Temporarily add to axis
-			ax[xindex, yindex].figure.canvas.draw()  # Force a draw to update the text size
-			text_bbox = temp_text.get_window_extent(renderer=ax[xindex, yindex].figure.canvas.get_renderer())
-			temp_text.remove()  # Remove the temporary text object
-
-			# Calculate the height of the text box in axis coordinates
-			height_in_axis_coords = text_bbox.height / ax[xindex, yindex].figure.bbox.height
-
-			y_text = -0.08 - height_in_axis_coords * 3.7  # Empirical values discovered by trial and error
+			# Anchor text to the axes bottom with a fixed point offset so placement is backend/platform independent.
+			text_transform = ax[xindex, yindex].transAxes + ScaledTranslation(
+				0, -16 / 72.0, fig.dpi_scale_trans
+			)
 
 			# Use the custom wrapping function defined above to wrap the text block string to the width of the plot for each player
-			ax[xindex, yindex].add_artist(WrapText(0, y_text, txt, width=1, widthcoords=ax[xindex, yindex].transAxes,
-													   transform=ax[xindex, yindex].transAxes,
-													   color=player_color[player_graph], fontsize=8.0))
+			ax[xindex, yindex].add_artist(
+				WrapText(
+					0,
+					0,
+					txt,
+					width=1,
+					widthcoords=ax[xindex, yindex].transAxes,
+					transform=text_transform,
+					color=player_color[player_graph],
+					fontsize=8.0,
+					va='top',
+					ha='left'
+				)
+			)
 
 	# Figure needs to be saved out at 200 dpi to preserve proper wrapping as defined above.
 	plt.savefig(mule_game_history.game_name + '_rounds.png', dpi=200)
