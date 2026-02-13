@@ -83,15 +83,16 @@ class WrapText(mtext.Text):
 							wrap=True,
 							clip_on=False,
 							**kwargs)
-		if not widthcoords:
-			self.width = width
-		else:
-			# Use transform() for two points; transform_point() is for a single point.
-			a = widthcoords.transform([(0, 0), (width, 0)])
-			self.width = a[1][0] - a[0][0]
+		# Keep the logical width and coordinate system, then resolve to pixels at draw time.
+		self._logical_width = width
+		self._widthcoords = widthcoords
 
 	def _get_wrap_line_width(self):
-		return self.width
+		if self._widthcoords is None:
+			return self._logical_width
+		# Recompute on each draw so wrapping tracks backend/dpi/layout differences.
+		a = self._widthcoords.transform([(0, 0), (self._logical_width, 0)])
+		return a[1][0] - a[0][0]
 
 
 def process_round_event(round_event, game_state):
